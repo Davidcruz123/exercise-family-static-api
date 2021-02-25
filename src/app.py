@@ -2,10 +2,11 @@
 This module takes care of starting the API Server, Loading the DB and Adding the endpoints
 """
 import os
-from flask import Flask, request, jsonify, url_for
+from flask import Flask, request, jsonify, url_for,json
 from flask_cors import CORS
 from utils import APIException, generate_sitemap
 from datastructures import FamilyStructure
+
 #from models import Person
 
 app = Flask(__name__)
@@ -25,18 +26,40 @@ def handle_invalid_usage(error):
 def sitemap():
     return generate_sitemap(app)
 
-@app.route('/members', methods=['GET'])
+@app.route('/members', methods=['GET',"POST"])
 def handle_hello():
+    if request.method=='GET':
+    # this is how you can use the Family datastructure by calling its methods
+        members = jackson_family.get_all_members()    
+        response_body =    [{
+            "hello": "world",
+            "family":members
+            
+        }]
+
+
+        return jsonify(response_body), 200
+    else:
+        request_body=request.data
+        decode_objet=json.loads(request_body)
+        return jsonify(jackson_family.add_member(decode_objet))
+
+
+@app.route('/members/<int:member_id>', methods=['GET','DELETE'])
+def chose_member(member_id):
 
     # this is how you can use the Family datastructure by calling its methods
-    members = jackson_family.get_all_members()
-    response_body = {
-        "hello": "world",
-        "family": members
-    }
+    if request.method=='GET':
+        member_chosen = jackson_family.get_member(member_id)        
+        return jsonify(member_chosen), 200
+    else:
+        
+        return jsonify(jackson_family.delete_member(member_id))
 
 
-    return jsonify(response_body), 200
+
+
+
 
 # this only runs if `$ python src/app.py` is executed
 if __name__ == '__main__':
